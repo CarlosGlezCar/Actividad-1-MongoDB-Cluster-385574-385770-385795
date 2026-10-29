@@ -1,0 +1,7 @@
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
+# No agregar archivos de datos MongoDB ni volumenes al repositorio.
+data/

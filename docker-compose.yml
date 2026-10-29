@@ -1,0 +1,80 @@
+services:
+  configsvr:
+    image: mongo:8.0
+    container_name: practica-configsvr
+    command:
+      - mongod
+      - --configsvr
+      - --replSet
+      - configReplSet
+      - --port
+      - "27019"
+      - --dbpath
+      - /data/configdb
+      - --bind_ip_all
+    volumes:
+      - config_data:/data/configdb
+      - ./scripts:/scripts:ro
+    restart: unless-stopped
+    networks:
+      - mongo_cluster
+
+  shard1:
+    image: mongo:8.0
+    container_name: practica-shard1
+    command: ["mongod", "--shardsvr", "--replSet", "shard1rs", "--port", "27018", "--bind_ip_all"]
+    volumes:
+      - shard1_data:/data/db
+      - ./scripts:/scripts:ro
+    restart: unless-stopped
+    networks:
+      - mongo_cluster
+
+  shard2:
+    image: mongo:8.0
+    container_name: practica-shard2
+    command: ["mongod", "--shardsvr", "--replSet", "shard2rs", "--port", "27018", "--bind_ip_all"]
+    volumes:
+      - shard2_data:/data/db
+      - ./scripts:/scripts:ro
+    restart: unless-stopped
+    networks:
+      - mongo_cluster
+
+  shard3:
+    image: mongo:8.0
+    container_name: practica-shard3
+    command: ["mongod", "--shardsvr", "--replSet", "shard3rs", "--port", "27018", "--bind_ip_all"]
+    volumes:
+      - shard3_data:/data/db
+      - ./scripts:/scripts:ro
+    restart: unless-stopped
+    networks:
+      - mongo_cluster
+
+  mongos:
+    image: mongo:8.0
+    container_name: practica-mongos
+    command: ["mongos", "--configdb", "configReplSet/configsvr:27019", "--bind_ip_all", "--port", "27017"]
+    depends_on:
+      - configsvr
+      - shard1
+      - shard2
+      - shard3
+    ports:
+      - "127.0.0.1:27020:27017"
+    volumes:
+      - ./scripts:/scripts:ro
+    restart: unless-stopped
+    networks:
+      - mongo_cluster
+
+volumes:
+  config_data:
+  shard1_data:
+  shard2_data:
+  shard3_data:
+
+networks:
+  mongo_cluster:
+    driver: bridge
